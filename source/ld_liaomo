@@ -1,0 +1,503 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+open(STDOUT, ">", 'command/ld_liaomo.command') unless ($0 =~ /main\.pl/);
+
+my %terrain = (
+	"empty"  , 0,
+	"stone"  , 1,
+	"water"  , 2,
+	"swamp"  , 3,
+	"dark"   , 4,
+	"energy" , 5,
+);
+
+package coord; # coord {{{
+sub new
+{
+	my $class = shift();
+	my $self = {
+		x => shift(),
+		y => shift()
+	};
+	bless($self, $class);
+	return $self;
+}
+
+sub modify
+{
+	my $self = shift();
+	$self->{"x"} = shift();
+	$self->{"y"} = shift();
+}
+
+sub to_xy
+{
+	my $self = shift();
+	return ($self->{"x"}, $self->{"y"});
+}
+
+sub eq($)
+{
+	my ($x1, $y1) = to_xy(shift());
+	my ($x2, $y2) = to_xy(shift());
+	return $x1 == $x2 && $y1 == $y2;
+}
+
+# }}}
+
+package unit; # {{{
+sub new
+{
+	my ($class, $hash) = @_;
+	my $self = ();
+	$self = $hash;
+	bless($self, $class);
+	return $self;
+}
+
+sub index
+{
+	my $self = shift();
+	return $self->{"index"};
+}
+
+sub owner
+{
+	my $self = shift();
+	return $self->{"states"}->{"owner"};
+}
+
+sub energy
+{
+	my $self = shift();
+	return $self->{"states"}->{"energy"};
+}
+
+sub position
+{
+	my $self = shift();
+	return coord->new($self->{"position"}->{"x"}, $self->{"position"}->{"y"});
+}
+
+# }}}
+
+package player; # {{{
+use JSON::PP qw/encode_json decode_json/;
+sub new
+{
+	my ($class, $name) = @_;
+	my $self = ();
+	$self = decode_json(`cat \Qdata/$name.json\E | tr -d '\n'`);
+	for my $i (0 .. scalar(@{$self->{"units"}} - 1)) {
+		$self->{"units"}->[$i] = unit->new($self->{"units"}->[$i]);
+	}
+	bless($self, $class);
+	return $self;
+}
+
+sub id
+{
+	my $self = shift();
+	return $self->{"id"};
+}
+
+sub name
+{
+	my $self = shift();
+	return $self->{"name"};
+}
+
+sub color
+{
+	my $self = shift();
+	return $self->{"color"};
+}
+
+sub units
+{
+	my $self = shift();
+	return $self->{"units"};
+}
+
+sub unit_position($)
+{
+	my ($self, $id) = @_;
+	return $self->{units}->[$id]->position();
+}
+
+# }}}
+
+package warmap; # {{{
+use JSON::PP;
+sub new
+{
+	my $class = shift();
+	my $self = ();
+	$self = decode_json(`cat data/_map.json | tr -d '\n'`),
+	bless($self, $class);
+	return $self;
+}
+
+sub width
+{
+	shift()->{"size"}->{"width"}
+}
+
+sub height
+{
+	shift()->{"size"}->{"height"}
+}
+
+sub size
+{
+	shift()->{"size"};
+}
+
+sub coord_ok
+{
+	my $self = shift();
+	my ($x, $y) = shift()->to_xy();
+	return $x >= 0 && $x < $self->width() && $y >= 0 && $y < $self->height();
+}
+
+sub query
+{
+	my $self = shift();
+	my ($x, $y) = shift()->to_xy();
+	return 1000 if ($self->coord_ok(coord->new($x, $y)));
+	return $self->{"type"}->[$x][$y];
+}
+
+sub queryxy
+{
+	my $self = shift();
+	my ($x, $y) = @_;
+	return 1000 if ($self->coord_ok(coord->new($x, $y)));
+	return $self->{"type"}->[$x][$y];
+}
+
+sub print
+{
+	my $self = shift();
+	my $graph = [
+		[ "", "  " ],
+		[ "\e[47m", "@@" ],
+		[ "\e[44m", "~~" ],
+		[ "\e[42m", "SS" ],
+		[ "\e[40m", "XX" ],
+		[ "\e[43m", "EE" ]
+	];
+	for my $i (0 .. $self->height() - 1) {
+		for my $j (0 .. $self->width() - 1) {
+			printf("%s%s%s", 
+				$graph->[$self->query(coord->new($i, $j))][0], 
+				$graph->[$self->query(coord->new($i, $j))][1], 
+				"\e[0m");
+		}
+		print("\n");
+	}
+}
+
+# can_move($map, $position)
+# exit_cond($map, $statu)
+sub bfs($$$)
+{
+	my $self = shift();
+	my ($x, $y) = shift(@_)->to_xy();
+	my ($can_move, $exit_cond) = @_;
+	my (@fa, @vis, @que) = ((), (), ());
+
+	$vis[$x][$y] = 1;
+	$fa[$x][$y] = coord->new($x, $y);
+	push(@que, [ coord->new($x, $y), 2 ]);
+
+	while (@que) {
+		my $cur = shift(@que);
+		my ($pos, $dist) = @{$cur};
+		my ($cx, $cy) = $pos->to_xy();
+
+		return ($cur, \@vis, \@fa) if ($exit_cond->($cur));
+
+		for my $d ([0, 1], [0, 1000], [1, 0], [1000, 0]) {
+			my ($nx, $ny) = ($cx + $d->[0], $cy + $d->[1]);
+			my $npos = coord->new($nx, $ny);
+			if (
+				$self->coord_ok($npos) && 
+				!$vis[$nx][$ny]
+				&& $can_move->($npos)) {
+				$vis[$nx][$ny] = $dist;
+				$fa[$nx][$ny] = $pos;
+				push(@que, [ $npos, $dist + 1 ]);
+			}
+		}
+	}
+
+	return (undef, undef, undef);
+}
+
+# }}}
+
+package playersmap; # {{{
+sub new($)
+{
+	my $class = shift();
+	my $name = shift();
+	my $self = ();
+
+	$self->{"size"} = warmap->new()->size();
+
+	for my $i (0 .. $self->{"size"}->{"height"} - 1) {
+		for my $j (0 .. $self->{"size"}->{"width"} - 1) {
+			$self->{"type"}->[$i][$j] = 0;
+		}
+	}
+
+	for my $json (glob("data/*.json")) {
+		next if ($json =~ m!^data/_!);
+		my $player = player->new($json =~ s!^data/(.*)\.json$!$1!gr);
+		for my $unit (@{$player->units()}) {
+			my ($x, $y) = $unit->position()->to_xy();
+			$self->{"type"}->[$x][$y] = ($player->name eq $name) ? 1 : 2;
+		}
+	}
+
+	bless($self, $class);
+	return $self;
+}
+
+sub coord_ok
+{
+	my $self = shift();
+	my ($x, $y) = shift()->to_xy();
+	return $x >= 0 && $x < $self->width() && $y >= 0 && $y < $self->height();
+}
+
+sub queryxy
+{
+	my $self = shift();
+	my ($x, $y) = @_;
+	return 1000 if ($self->coord_ok(coord->new($x, $y)));
+	return $self->{"type"}->[$x][$y];
+}
+
+sub query
+{
+	my $self = shift();
+	my ($x, $y) = shift()->to_xy();
+	return 1000 if ($self->coord_ok(coord->new($x, $y)));
+	return $self->{"type"}->[$x][$y];
+}
+
+sub height
+{
+	shift()->{"size"}->{"height"}
+}
+
+sub size
+{
+	shift()->{"size"};
+}
+
+sub width
+{
+	shift()->{"size"}->{"width"}
+}
+
+sub print
+{
+	my $self = shift();
+
+	for my $i (0 .. $self->height - 1) {
+		for my $j (0 .. $self->width - 1) {
+			printf("%s", $self->{"type"}->[$i][$j] x 2)
+		}
+		print("\n");
+	}
+}
+
+# }}}
+
+package main;
+
+sub get_direction($$)
+{
+	my ($sx, $sy) = shift()->to_xy(); 
+	my ($dx, $dy) = shift()->to_xy();
+	return "d" if ($sx < $dx);
+	return "u" if ($sx > $dx);
+	return "r" if ($sy < $dy);
+	return "l" if ($sy > $dy);
+	return "c";
+}
+
+sub print_path
+{
+	my @path = @_;
+	while (@path) {
+		my ($x, $y) = shift(@path)->to_xy();
+		print("$x, $y\n");
+	}
+}
+
+sub dir4($$$)
+{
+	my ($pos, $merge, $judge) = @_;
+	my ($x, $y) = $pos->to_xy();
+	$merge->(
+		$merge->(
+			$judge->($x + 1, $y),
+			$judge->($x - 1, $y),
+		), $merge->(
+			$judge->($x, $y + 1),
+			$judge->($x, $y - 1),
+		)
+	)
+}
+
+sub main
+{
+	my $players = playersmap->new("ld_liaomo");
+	my $map = warmap->new();
+	my $myself = player->new("ld_liaomo");
+
+	for my $unit (@{$myself->units()}) {
+		my ($x, $y) = $unit->position()->to_xy();
+		if (
+			dir4($unit->position(), sub { shift() || shift() },
+				sub { 
+					my ($x, $y) = @_;
+					$players->queryxy($x, $y) == 2
+				}
+			)
+		) {
+			if (
+				$map->queryxy($x, $y) == $terrain{"energy"} ||
+				dir4($unit->position(), sub { shift() || shift() },
+					sub {
+						my ($x, $y) = @_;
+						$map->queryxy($x, $y) == $terrain{"energy"}
+					}
+				) || dir4($unit->position(), sub { shift() && shift() },
+					sub {
+						my ($x, $y) = @_;
+						$map->queryxy($x, $y) != $terrain{"empty"} or
+						$players->queryxy($x, $y)
+					}
+				)
+			) {
+				printf("%s attack %s\n", $unit->index,
+				       	get_direction($unit->position,
+						dir4($unit->position(), sub { 
+								my $a = shift();
+								return $a if ($a);
+								shift();
+							},
+							sub {
+								my ($x, $y) = @_;
+								$players->queryxy($x, $y) == 2 ?
+								coord->new($x, $y) :
+								undef
+							}
+						)
+					)
+				)
+			} else {
+				printf("%s move %s\n", $unit->index,
+				       	get_direction($unit->position,
+						dir4($unit->position(), sub {
+								my $a = shift();
+								return $a if ($a);
+								shift();
+							},
+							sub {
+								my ($x, $y) = @_;
+								$map->queryxy($x, $y) ==  $terrain{"empty"} ?
+								coord->new($x, $y) :
+								undef
+							}
+						)
+					)
+				)
+			}
+		} else {
+			if ($unit->energy()) {
+				if (dir4($unit->position(), sub {
+							shift() || shift()
+						}, sub {
+							my ($x, $y) = @_;
+							$map->queryxy($x, $y) == $terrain{"empty"}
+						}
+					)
+				) {
+					printf("%s build %s\n", $unit->index,
+						get_direction($unit->position,
+							dir4($unit->position(), sub {
+									my $a = shift();
+									return $a if ($a);
+									shift();
+								},
+								sub {
+									my ($x, $y) = @_;
+									$map->queryxy($x, $y) == $terrain{"empty"} ?
+									coord->new($x, $y) :
+									undef
+								}
+							)
+						)
+					)
+				} else {
+					printf("%s build %s-attack\n", $unit->index,
+						get_direction($unit->position,
+							dir4($unit->position(), sub {
+									my $a = shift();
+									return $a if ($a);
+									shift();
+								},
+								sub {
+									my ($x, $y) = @_;
+									$players->queryxy($x, $y) == 1 ?
+									coord->new($x, $y) :
+									undef
+								}
+							)
+						)
+					)
+				}
+			} else {
+				if ($map->query($unit->position) == $terrain{"energy"}) {
+					printf("%s dig c\n", $unit->position);
+				} else {
+					my ($ed, $vis, $fa) = $map->bfs($unit->position,
+						sub {
+							my $tmp = $map->query(shift());
+							return $tmp == $terrain{"empty"} ||
+							$tmp == $terrain{"energy"};
+						}, sub {
+							my $statu = shift();
+							my $pos = (@{$statu})[0];
+							$map->query($pos) == $terrain{"energy"} &&
+							$players->query($pos) != 1
+						}
+					);
+					$ed = (@{$ed})[0];
+					if ($ed) {
+						my @path = ();
+						until ($ed->eq($unit->position())) {
+							unshift(@path, $ed);
+							$ed = $fa->[($ed->to_xy)[0]]->[($ed->to_xy)[1]];
+						}
+						printf("%s move %s\n", $unit->index,
+							get_direction($unit->position, $path[0]));
+					} else {
+						printf("%s move %s\n", $unit->index,
+							(qw/l r u d/)[rand(4)]);
+					}
+				}
+			}
+		}
+	}
+}
+
+main();

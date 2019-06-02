@@ -1,0 +1,7 @@
+- get_data() 获取总数据文件
+- get_colors() 获取所有玩家的颜色
+- get_names() 获取所有玩家的名字
+- get_players_json() 获取所有的用户 JSON
+- get_json(name) 获取 name 的 JSON 文件
+- update_data(data) 更新总数据文件
+- update_json_file(name, data) 更新 name 的 JSON 文件

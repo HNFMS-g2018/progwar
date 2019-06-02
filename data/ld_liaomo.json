@@ -1,0 +1,33 @@
+{
+  "id": 0,
+  "name": "ld_liaomo",
+  "color": "66ccff",
+  "units": [
+    {
+      "index": 0,
+      "position": {
+        "x": 11,
+        "y": 31,
+        "index": 0
+      },
+      "states": {
+        "owner": 0,
+        "hp": 10,
+        "energy": 10,
+        "occupy": true
+      },
+      "ability": {
+        "dig": 0,
+        "build": 1,
+        "move": 1,
+        "attack": 0,
+        "magic": 0,
+        "healing": 0,
+        "carry": 1,
+        "defense": 1,
+        "swim": 0
+      }
+    }
+  ],
+  "length": 1
+}

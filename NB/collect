@@ -1,0 +1,24 @@
+#!/usr/bin/perl
+#收集玩家程序输出。
+
+use strict;
+use warnings;
+use File::Basename qw/dirname basename/;
+
+my $timeout = 'timeout --signal=KILL 1 ./%s < statu';
+
+chdir(dirname($0));
+# 懒得写文件了。
+system("cat info/map info/unit > prog/statu");
+chdir("prog");
+
+for my $prog (glob("*.run")) {
+	if (-x "$prog") {
+		my $cmd = readpipe(sprintf($timeout, $prog));
+		for my $line (split("\n",$cmd)) {
+			printf("%s %s\n", basename($prog, ".run"), $line)
+		}
+	}
+}
+
+unlink("statu");

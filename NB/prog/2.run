@@ -1,0 +1,5 @@
+#!/usr/bin/perl
+
+for (1 .. 100) {
+	printf("%s %s %s\n", $_, (qw/move fork/)[rand(2)], (qw/l u r d/)[rand(4)]);
+}

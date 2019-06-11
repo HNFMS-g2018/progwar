@@ -13,11 +13,11 @@ body {
 }
 @font-face {
 	font-family: "PristinaStd";
-	src: url('../font/PristinaStd.OTF');
+	src: url('../font/PristinaStd.ttf');
 }
 @font-face {
 	font-family: "Bendigo";
-	src: url('../font/Bendigo.OTF');
+	src: url('../font/Bendigo.ttf');
 }
 .artFont {
 	font-family: "PristinaStd";

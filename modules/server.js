@@ -51,6 +51,9 @@ function start() {
 		}
 		res.send(log); 
 	});
+	app.get('/message', function (req, res) { 
+    res.send('<meta http-equiv="refresh" content="0;url=https://www.luogu.org/discuss/show/118177">');
+	});
 
 	// 设立接受文件夹
 	app.use(MUTIPART({uploadDir:'./source'}));

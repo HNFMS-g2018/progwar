@@ -1,0 +1,7 @@
+- get_new_map 获取只有 type 的空地图
+- get_map 获取完整地图
+- get_html_source 获取地图的 HTML 代码
+- check_block_pass 检查位置是否可以通过
+- check_block_stay 检查位置是否可以停留
+- update_map_to_players 将地图更新到单位文件
+- print_units 输出地图上的 unit

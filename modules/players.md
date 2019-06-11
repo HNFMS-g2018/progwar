@@ -1,0 +1,4 @@
+- get_players 获取玩家信息
+- update_players 更新玩家信息
+- get_all_names 获取所有玩家名字
+- delete_players(player) 删除玩家

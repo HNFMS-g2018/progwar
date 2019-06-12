@@ -1,0 +1,84 @@
+body {
+  font-family: 'HYQuHeiW',Monaco;
+  background-color: #ffffff;
+  color: black;
+}
+@font-face {
+  font-family: 'HYQuHeiW';
+	src: url('../font/HYQuHeiW.ttf');
+} 
+@font-face {
+	font-family: "Monaco";
+	src: url('../font/Monaco.ttf');
+}
+@font-face {
+	font-family: "PristinaStd";
+	src: url('../font/PristinaStd.ttf');
+}
+@font-face {
+	font-family: "Bendigo";
+	src: url('../font/Bendigo.ttf');
+}
+.artFont {
+	font-family: "PristinaStd";
+}
+.rudeFont {
+	font-family: "Bendigo";
+} 
+.frame {
+	text-align: center;
+}
+.title {
+	font-size: 200px;
+}
+.subtitle {
+	margin-top: 50px;
+  margin-bottom: 100px;
+	font-size: 38px;
+}
+.content {
+	margin-left: auto;
+	margin-right: auto;
+	width: 70%;
+	font-size: 35px;
+	text-align: left;
+}
+.button {
+  margin-top: 10px;
+  margin-left: 5%;
+  margin-right: 5%;
+  margin-bottom: 10%;
+}
+a {
+  text-decoration: none;
+}
+input[type="file"] {
+  width: 0.1px; 
+  height: 0.1px; 
+  opacity: 0; 
+  overflow: hidden; 
+  position: absolute; 
+  z-index: -1;
+}
+section {
+	padding-top: 200px;
+	padding-bottom: 200px;
+	margin-bottom: 100px;
+	margin-top: 100px;
+}
+hr {
+	width:80%;
+	margin:0 auto;
+	border: 0;
+	height: 1px;
+	background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
+}
+form {
+	padding: 100px;
+}
+div {
+	padding: 10px;
+}
+.submit {
+	margin-bottom: 100px;
+}

@@ -33,10 +33,13 @@ function execute(map, commands) {
 				console.log(new Date() + ": <build.js> [Infor] Units don't have the same owner.");
 				continue;
 			}
+			/*
+			// TODO 暂时忽略 build 的等级限制，完备以后再重启
 			if (UNITS.get_level(unitB) > unitA.ability.build) {
 				console.log(new Date() + ": <build.js> [Infor] Unit's ability build is too low");
 				continue;
 			}
+			*/
 
       var need = command.arg.match(/-(.*)/)[1];
       unitB.ability[need]++;

@@ -1,4 +1,4 @@
 3
 _dead ffcccc
 ld_liaomo 66ccff
-samcompu 51C5B3
+_dead 51C5B3

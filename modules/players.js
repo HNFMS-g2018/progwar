@@ -34,6 +34,7 @@ function update_players(players) {
 function delete_players(player) {
 	console.log(new Date() + ": <players.js> [Infor] Delete player '" + player.name + "'");
 	FS.unlinkSync('data/' + player.name + '.txt');
+	FS.unlinkSync('source/' + player.name);
 	player.name = "_dead";
 }
 

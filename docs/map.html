@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+		<title></title>
+    <link rel="stylesheet" type="text/css" href="css/map.css" />
+</head>
+<body>
+  <canvas id="canvas" width="10000px" height="5000px"></canvas>
+</body>
+
+		<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>   
+		<script src="js/draw.js"></script>   
+
+		<script>
+      // alert(window.devicePixelRatio);
+      get_data();
+
+function formatMap(data) {
+  data = data.split('\n');
+  var res = [];
+  res.height = data[0].split(' ')[0], res.width = data[0].split(' ')[1];
+  for (var i = 0; i < res.height; ++i) {
+    res[i] = [];
+    for (var j = 0; j < res.width; ++j) res[i][j] = data[i + 1][j];
+  }
+  return res;
+}
+
+function markMap(map) {
+  const bdColor = ['rgba(45, 45, 45, 0.98)', 'gray', '#66CCFF', 'green', 'black', 'yellow'];
+  var res = [];
+  res.height = map.height, res.width = map.width;
+  for (var i = 0; i < res.height; ++i) {
+    res[i] = [];
+    for (var j = 0; j < res.width; ++j) {
+      res[i][j] = {};
+      res[i][j].border = bdColor[map[i][j]];
+    }
+  }
+  return res;
+}
+
+
+function get_data() {
+  $.ajax({
+    type:"GET",
+    url:"http://172.16.11.251:7141/data",
+    dataType:"json",
+    timeout: 1000, 
+    success: function (resp) {
+      var map = formatMap(resp.map[0]);
+      var data = markMap(map);
+      draw(data);
+      get_data();
+    }
+  })
+}
+    </script>
+</html>

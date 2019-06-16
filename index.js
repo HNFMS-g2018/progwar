@@ -1,3 +1,4 @@
 const logger = require('./src/logger');
+const service = require('./src/service');
 
-logger.in().info("hello");
+service.start();

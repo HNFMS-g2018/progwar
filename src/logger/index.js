@@ -49,4 +49,4 @@ log4js.configure({
 	pm2: true
 });
 
-exports.in = log4js.getLogger;
+module.exports = log4js.getLogger();

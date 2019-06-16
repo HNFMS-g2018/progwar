@@ -1,8 +1,10 @@
-log4js 的封装，将不同等级的信息分散到不同文件中。
+## logger
+
+log4js.getLogger 的封装，将不同等级的信息分散到不同文件中。
 
 ```
-const logger = require('./src/logger');
+const logger = require('./src/logger').logger;
 
-logger.in("main").debug("hello");
+logger.debug("hello");
 ```
 

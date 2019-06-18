@@ -13,5 +13,12 @@ $(EXE): $(OBJ)
 
 main.o:
 
+list.o: list.h
+
+list_test.o:
+
+list.test: list.o list_test.o
+	$(CC) $(CFLAGS) $^ -o $@
+
 clean:
-	rm -f $(EXE) $(OBJ)
+	rm -f $(EXE) *.o *.test
